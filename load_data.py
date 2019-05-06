@@ -25,6 +25,12 @@ def transform_HDR(image, im_size=(256,256)):
     #out = tf.cast(image, tf.float32)
     out = tf.image.resize_images(image, im_size)
     return out*2. - 1.
+	
+def transform_TM(image, im_size=(256, 256)):
+	out = tf.cast(image, tf.float32)
+	out = tf.image.resize_images(out, im_size)
+	return out/127.5 - 1.
+	
 
 def load_data(filename_queue, config):
     
@@ -41,6 +47,7 @@ def load_data(filename_queue, config):
             'in_exps': tf.FixedLenFeature([], tf.string),
             'ref_exps': tf.FixedLenFeature([], tf.string),
             'ref_HDR': tf.FixedLenFeature([], tf.string),
+			'ref_TM': tf.FixedLenFeature([], tf.string),
         })
     
     in_LDRs = tf.decode_raw(img_features['in_LDRs'], tf.uint8)
@@ -48,13 +55,15 @@ def load_data(filename_queue, config):
     in_exps = tf.decode_raw(img_features['in_exps'], tf.float32)
     ref_exps = tf.decode_raw(img_features['ref_exps'], tf.float32)
     ref_HDR = tf.decode_raw(img_features['ref_HDR'], tf.float32)
+    ref_TM = tf.decode_raw(img_features['ref_TM'], tf.uint8)
     
     in_LDRs = tf.reshape(in_LDRs, [load_h, load_w, c*config.num_shots])
     ref_LDRs = tf.reshape(ref_LDRs, [load_h, load_w, c*config.num_shots])
     in_exps = tf.reshape(in_exps, [config.num_shots])
     ref_exps = tf.reshape(ref_exps, [config.num_shots])
     ref_HDR = tf.reshape(ref_HDR, [load_h, load_w, c])
-    
+    ref_TM = tf.reshape(ref_TM, [load_h, load_w, c])
+	
     ######### distortions #########
     distortions = tf.random_uniform([2], 0, 1.0, dtype=tf.float32)
     
@@ -62,26 +71,29 @@ def load_data(filename_queue, config):
     in_LDRs = tf.cond(tf.less(distortions[0],0.5), lambda: tf.image.flip_left_right(in_LDRs), lambda: in_LDRs)
     ref_LDRs = tf.cond(tf.less(distortions[0],0.5), lambda: tf.image.flip_left_right(ref_LDRs), lambda: ref_LDRs)
     ref_HDR = tf.cond(tf.less(distortions[0],0.5), lambda: tf.image.flip_left_right(ref_HDR), lambda: ref_HDR)
-    
+    ref_TM = tf.cond(tf.less(distortions[0],0.5), lambda: tf.image.flip_left_right(ref_TM), lambda: ref_TM)
+	
     # rotate
     k = tf.cast(distortions[1]*4+0.5, tf.int32)
     in_LDRs = tf.image.rot90(in_LDRs, k)
     ref_LDRs = tf.image.rot90(ref_LDRs, k)
     ref_HDR = tf.image.rot90(ref_HDR, k)
+    ref_TM = tf.image.rot90(ref_TM, k)
     ######### distortions #########
 
     in_LDRs = transform_LDR(in_LDRs, [fine_h, fine_w])
     ref_LDRs = transform_LDR(ref_LDRs, [fine_h, fine_w])
     ref_HDR = transform_HDR(ref_HDR, [fine_h, fine_w])
+    ref_TM = transform_TM(ref_TM, [fine_h, fine_w])
     in_exps = 2.**in_exps
     ref_exps = 2.**ref_exps
     in_HDRs = LDR2HDR_batch(in_LDRs, in_exps)
     
-    in_LDRs_batch, in_HDRs_batch, ref_LDRs_batch, ref_HDR_batch, in_exps_batch, ref_exps_batch = tf.train.shuffle_batch(
-        [in_LDRs, in_HDRs, ref_LDRs, ref_HDR, in_exps, ref_exps],
+    in_LDRs_batch, in_HDRs_batch, ref_LDRs_batch, ref_HDR_batch, ref_TM_batch, in_exps_batch, ref_exps_batch = tf.train.shuffle_batch(
+        [in_LDRs, in_HDRs, ref_LDRs, ref_HDR, ref_TM, in_exps, ref_exps],
         batch_size=config.batch_size,
         num_threads=2,
         capacity=256,
         min_after_dequeue=64)
     
-    return in_LDRs_batch, in_HDRs_batch, ref_LDRs_batch, ref_HDR_batch, in_exps_batch, ref_exps_batch
+    return in_LDRs_batch, in_HDRs_batch, ref_LDRs_batch, ref_HDR_batch, ref_TM_batch, in_exps_batch, ref_exps_batch

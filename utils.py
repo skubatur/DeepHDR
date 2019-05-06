@@ -15,7 +15,7 @@ import pprint
 import cv2
 import numpy as np
 from time import gmtime, strftime
-
+from skimage.measure import structural_similarity as ssim
 import pdb
 
 
@@ -25,6 +25,9 @@ def compute_psnr(img1, img2):
         return 100
     PIXEL_MAX = 2.0 # input -1~1
     return 20 * math.log10(PIXEL_MAX / math.sqrt(mse))
+	
+def compute_ssim(img1, img2):
+	return ssim(img1, img2)
 
 def radiance_writer(out_path, image):
     with open(out_path, "wb") as f:
@@ -62,8 +65,11 @@ def get_image(image_path, image_size=None, is_crop=False):
         assert (image_size is not None), "the crop size must be specified"
     return transform(imread(image_path), image_size, is_crop)
 
-def save_images(images, size, image_path):
-    return imsave(inverse_transform(images), size, image_path)
+def save_images(images, size, image_path, gc=False):
+    it = inverse_transform(images)
+    if gc:
+        it = it**(1/1.1)
+    return imsave(it, size, image_path)
 
 def imread(path):
     if path[-4:] == '.hdr':

@@ -5,7 +5,7 @@ import argparse
 import os
 import tensorflow as tf
 
-from model import model
+from model_hdr_tm import model
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--checkpoint_dir', type=str, default='checkpoint')

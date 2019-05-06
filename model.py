@@ -91,7 +91,7 @@ class model(object):
         self.c_dim = config.c_dim
         self.num_shots = config.num_shots
         
-        self.sample_freq = int(100*64/config.batch_size)
+        self.sample_freq = int(10*64/config.batch_size)
         if config.save_freq == 0:
             self.save_freq = int(500*64/config.batch_size)
         else:
@@ -116,7 +116,7 @@ class model(object):
             
             with tf.device('/cpu:0'):
                 filename_queue = tf.train.string_input_producer(tfrecord_list)
-                self.in_LDRs, self.in_HDRs, self.ref_LDRs, self.ref_HDR, _, _ = load_data(filename_queue, config)
+                self.in_LDRs, self.in_HDRs, self.ref_LDRs, self.ref_HDR, _, _, _ = load_data(filename_queue, config)
 
             self.G_HDR = self.generator(self.in_LDRs,self.in_HDRs, train=train)
             self.G_tonemapped = tonemap(self.G_HDR)
@@ -134,7 +134,7 @@ class model(object):
                     './dataset/tf_records', '**', '*.tfrecords'), recursive=True)
                 shuffle(sample_tfrecord_list)
                 filename_queue_sample = tf.train.string_input_producer(sample_tfrecord_list)
-                self.in_LDRs_sample, self.in_HDRs_sample, self.ref_LDRs_sample, self.ref_HDR_sample, _, _ = \
+                self.in_LDRs_sample, self.in_HDRs_sample, self.ref_LDRs_sample, self.ref_HDR_sample, _, _, _ = \
                     load_data(filename_queue_sample, config)
             
             self.sampler_HDR = self.generator(self.in_LDRs_sample, self.in_HDRs_sample, train=False, reuse = True)

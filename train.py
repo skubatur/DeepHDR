@@ -11,7 +11,7 @@ import scipy.misc
 import numpy as np
 import tensorflow as tf
 
-from model import model
+from model_hdr_tm import model
 
 
 flags = tf.app.flags

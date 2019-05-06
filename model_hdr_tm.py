@@ -304,25 +304,17 @@ class model(object):
             psnr_f.write("PSNR: %.4f\n\n" %np.mean(curr_psnr))
             psnr += curr_psnr
             
-            print(tm_samples[i].shape)
-            print(batch_ref_TM[i].shape)
-            print(tm_samples[i].dtype)
-            print(batch_ref_TM[i].dtype)
-            print(np.max(tm_samples))
-            print(np.min(tm_samples))
-            print(np.max(batch_ref_TM))
-            print(np.min(batch_ref_TM))
             #curr_ssim = [compute_ssim(tm_samples[i], batch_ref_TM[i]) for i in range(batchSz)]
             #print("SSIM: %.4f\n" %np.mean(curr_ssim))
             #ssim_f.write("SSIM: %.4f\n\n" %np.mean(curr_ssim))
             #ssim += curr_ssim
-            cv2.imwrite("img.png", (tm_samples[0]+2)*127.5)
+            
             save_results([tm_samples[:batchSz]],
-                         os.path.join(config.results_dir, 'test_{:03d}_{:03d}_TM.png'.format(l,u)))
+                         os.path.join(config.results_dir, 'test_{:03d}_{:03d}_TM.png'.format(l,u)), True)
             save_results([batch_ref_TM[:batchSz]],
                          os.path.join(config.results_dir, 'test_{:03d}_{:03d}_ref_TM.png'.format(l,u)))
-            save_results([tonemap_np(res_samples[:batchSz])],
-                         os.path.join(config.results_dir, 'test_{:03d}_{:03d}_tonemapped.png'.format(l,u)))
+            #save_results([tonemap_np(res_samples[:batchSz])],
+             #            os.path.join(config.results_dir, 'test_{:03d}_{:03d}_tonemapped.png'.format(l,u)))
             save_results([batch_in_LDRs],
                          os.path.join(config.results_dir, 'test_{:03d}_{:03d}_LDRs.png'.format(l,u)))
         
